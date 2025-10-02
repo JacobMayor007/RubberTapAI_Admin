@@ -57,9 +57,8 @@ export default function Login() {
 
       const json = await res.json();
 
-      alert(json.title, json.message);
-
       if (!res.ok || !json?.success) {
+        alert(json.title, json.message);
         throw new Error(json?.message || `Login failed (${res.status})`);
       }
 
