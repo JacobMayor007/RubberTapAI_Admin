@@ -1,18 +1,14 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import { account } from "../../lib/appwrite";
+import { NavLink } from "react-router-dom";
 
 const Sidebar = () => {
-  const navigate = useNavigate();
-
   const base =
     "flex items-center gap-3 px-8 py-3 text-[#C2E18A] hover:bg-[#6B4226] hover:text-white transition-all";
   const active = "bg-[#A6A06B] text-white font-regular";
 
   const handleLogout = async () => {
     try {
-      await account.deleteSession({ sessionId: "current" });
-      localStorage.removeItem("token");
-      navigate("/login");
+      localStorage.clear();
+      window.location.reload();
     } catch (error) {
       console.error("Logout failed:", error);
     }
