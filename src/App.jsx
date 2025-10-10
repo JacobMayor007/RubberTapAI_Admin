@@ -6,7 +6,6 @@ import AccountSettings from "./pages/AccountSettings";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
-  // This will re-render when localStorage changes
   const sessionId = localStorage.getItem("sessionId");
 
   return (
