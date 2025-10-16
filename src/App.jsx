@@ -3,7 +3,8 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/UserManagement";
 import AccountSettings from "./pages/AccountSettings";
-import ProtectedRoute from "./components/ProtectedRoute"; // ⬅️ import it
+import Analytics from "./pages/Analytics"; // ⬅️ ADD THIS LINE
+import ProtectedRoute from "./components/ProtectedRoute";
 import { account } from "./lib/appwrite";
 import { useEffect, useState } from "react";
 
@@ -51,6 +52,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AccountSettings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <Analytics />
             </ProtectedRoute>
           }
         />

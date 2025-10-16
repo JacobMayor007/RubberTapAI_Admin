@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import Navbar from "../components/layout/Navbar";
 import { account } from "../lib/appwrite";
-import { adminApi } from "../lib/adminApi";
+
+const BASE_URL = "https://rubbertapai-backend.vercel.app";
 
 // Fallback dummy data
 const fallbackUsers = [
@@ -49,112 +50,139 @@ export default function UserManagement() {
   const [userList, setUserList] = useState([]);
   const [userReports, setUserReports] = useState({});
   const [loading, setLoading] = useState(true);
-  const [adminData, setAdminData] = useState(null);
   const [notif, setNotif] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const getAdminData = async () => {
+    const loadUsers = async () => {
       try {
         const user = await account.get();
-        const adminData = {
+
+        console.log("🔑 Current Appwrite User ID:", user.$id);
+
+        // ✅ Include 'email' in request body as required
+        const requestBody = {
           userId: user.$id,
+          API_KEY: import.meta.env.VITE_ADMIN_API_KEY,
           email: user.email,
-          API_KEY: import.meta.env.VITE_ADMIN_API_KEY
         };
-        
-        console.log("👤 UserManagement - Admin data:", {
-          userId: user.$id,
-          email: user.email,
-          apiKey: adminData.API_KEY ? "✓ Loaded" : "✗ Missing"
+
+        console.log("📦 Sending POST request with JSON body:", requestBody);
+
+        const response = await fetch(`${BASE_URL}/api/v1/admin/users`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(requestBody),
         });
-        
-        setAdminData(adminData);
-        
-        // Test API first
-        const testResult = await adminApi.testAdminAPI(adminData);
-        console.log("🧪 UserManagement API Test:", testResult);
-        
-        if (testResult.success) {
-          setError(null);
-          fetchUsers(adminData);
+
+        console.log("📡 Response Status:", response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("✅ SUCCESS! API Response:", data);
+
+          if (data.success && Array.isArray(data.data)) {
+            const transformedUsers = data.data.map((user) => ({
+              id: user.$id,
+              name:
+                user.fullName ||
+                (user.fName && user.lName
+                  ? `${user.fName} ${user.lName}`
+                  : user.username) ||
+                user.email,
+              image: user.imageURL || "",
+              status: user.status === "disable" ? "Disabled" : "Enabled",
+              email: user.email,
+              role: user.role,
+            }));
+
+            setUserList(transformedUsers);
+            setError(null);
+            console.log(`✅ Loaded ${transformedUsers.length} users from API`);
+          } else {
+            console.warn("⚠️ Unexpected response format, using demo data");
+            setUserList(fallbackUsers);
+            setError("Unexpected API response format. Using demo data.");
+          }
         } else {
-          setError(`API Connection Failed: ${testResult.error}. Using demo data.`);
+          const errorData = await response.json().catch(() => ({}));
+          console.error("❌ API Error:", errorData);
           setUserList(fallbackUsers);
-          setLoading(false);
+          setError(
+            `API returned ${response.status}: ${
+              errorData.error || "Using demo data"
+            }`
+          );
         }
-        
       } catch (error) {
-        console.error("Error getting admin data:", error);
-        setError("Failed to load admin data. Using demo data.");
+        console.error("🚨 Network error:", error);
         setUserList(fallbackUsers);
+        setError("Network error. Using demo data.");
+      } finally {
         setLoading(false);
       }
     };
-    getAdminData();
+
+    loadUsers();
   }, []);
 
-  const fetchUsers = async (adminData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log("📥 Fetching users from API...");
-      
-      const response = await adminApi.getAllUsers(adminData);
-      console.log("👥 Users API Response:", response);
-      
-      if (response.success && response.data && Array.isArray(response.data)) {
-        const transformedUsers = response.data.map(user => ({
-          id: user.$id,
-          name: user.fullName || user.username || user.email,
-          image: user.imageURL || '',
-          status: user.status === "disabled" ? "Disabled" : "Enabled",
-          email: user.email,
-          role: user.role
-        }));
-        setUserList(transformedUsers);
-        console.log(`✅ Loaded ${transformedUsers.length} users from backend`);
-      } else {
-        setError(`API returned: ${response.message || 'No users data available'}. Using demo data.`);
-        setUserList(fallbackUsers);
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setError(`Cannot connect to backend: ${error.message}. Using demo data.`);
-      setUserList(fallbackUsers);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchUserReports = async (userId) => {
-    if (!adminData) return;
-    
     try {
-      console.log("Fetching reports for user:", userId);
-      const response = await adminApi.getUserReports(adminData, userId);
-      if (response.success && response.data && Array.isArray(response.data)) {
-        setUserReports(prev => ({
-          ...prev,
-          [userId]: response.data.map(report => ({
-            id: report.$id,
-            name: report.reportedBy || 'Anonymous',
-            date: new Date(report.$createdAt).toLocaleDateString(),
-            reason: report.description || 'No reason provided'
-          }))
-        }));
+      const user = await account.get();
+
+      const requestBody = {
+        userId: user.$id,
+        API_KEY: import.meta.env.VITE_ADMIN_API_KEY,
+        reportedId: userId,
+        email: user.email,
+      };
+
+      console.log("🔄 Fetching reports for user:", userId, requestBody);
+
+      const response = await fetch(`${BASE_URL}/api/v1/admin/user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("📡 Reports Response Status:", response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ Reports response:", data);
+
+        let reportsArray = [];
+        if (data.success && Array.isArray(data.data)) {
+          reportsArray = data.data;
+        }
+
+        if (reportsArray.length > 0) {
+          setUserReports((prev) => ({
+            ...prev,
+            [userId]: reportsArray.map((report) => ({
+              id: report.$id,
+              name: report.reportedBy || "Anonymous",
+              date: new Date(report.$createdAt).toLocaleDateString(),
+              reason: report.description || "No reason provided",
+            })),
+          }));
+        } else {
+          setUserReports((prev) => ({ ...prev, [userId]: [] }));
+        }
       } else {
-        setUserReports(prev => ({
-          ...prev,
-          [userId]: []
-        }));
+        const errorData = await response.json().catch(() => ({}));
+        console.log("❌ Reports API failed:", errorData);
+        setUserReports((prev) => ({ ...prev, [userId]: [] }));
       }
     } catch (error) {
       console.error("Error fetching user reports:", error);
-      setUserReports(prev => ({
-        ...prev,
-        [userId]: []
-      }));
+      setUserReports((prev) => ({ ...prev, [userId]: [] }));
     }
   };
 
@@ -170,55 +198,62 @@ export default function UserManagement() {
   };
 
   const handleToggleStatus = async (id) => {
-    if (!adminData) {
-      // Fallback: update local state only
-      setUserList((prev) =>
-        prev.map((u) =>
-          u.id === id
-            ? {
-                ...u,
-                status: u.status === "Enabled" ? "Disabled" : "Enabled",
-              }
-            : u
-        )
-      );
-      const user = userList.find((u) => u.id === id);
-      if (user) {
-        setNotif({
-          message: `User "${user.name}" is now ${
-            user.status === "Enabled" ? "Disabled" : "Enabled"
-          }.`,
-          type: user.status === "Enabled" ? "error" : "success",
-        });
-        setTimeout(() => setNotif(null), 2000);
-      }
-      return;
-    }
-    
     try {
-      const user = userList.find((u) => u.id === id);
-      const newStatus = user.status !== "Enabled"; // true for enable, false for disable
-      
-      const response = await adminApi.toggleUserStatus(adminData, id, newStatus);
+      const user = await account.get();
+      const targetUser = userList.find((u) => u.id === id);
+      const newStatus = targetUser.status !== "Enabled";
 
-      if (response.success) {
-        setUserList((prev) =>
-          prev.map((u) =>
-            u.id === id
-              ? {
-                  ...u,
-                  status: newStatus ? "Enabled" : "Disabled",
-                }
-              : u
-          )
-        );
-        setNotif({
-          message: response.message || `User "${user.name}" status updated successfully.`,
-          type: "success",
-        });
+      const requestBody = {
+        userId: user.$id,
+        API_KEY: import.meta.env.VITE_ADMIN_API_KEY,
+        reportedId: id,
+        status: newStatus ? "enable" : "disable",
+        email: user.email,
+      };
+
+      console.log("🔄 Making enable/disable request:", requestBody);
+
+      const response = await fetch(`${BASE_URL}/api/v1/admin/user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("📡 Enable/disable response status:", response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("✅ Enable/disable SUCCESS:", result);
+
+        if (result.success) {
+          setUserList((prev) =>
+            prev.map((u) =>
+              u.id === id
+                ? { ...u, status: newStatus ? "Enabled" : "Disabled" }
+                : u
+            )
+          );
+          setNotif({
+            message:
+              result.message ||
+              `User "${targetUser.name}" status updated successfully.`,
+            type: "success",
+          });
+        } else {
+          setNotif({
+            message: result.message || "Failed to update user status",
+            type: "error",
+          });
+        }
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("❌ Enable/disable failed:", errorData);
+
         setNotif({
-          message: response.message || "Failed to update user status",
+          message: errorData.error || "Failed to update user status",
           type: "error",
         });
       }
@@ -229,7 +264,7 @@ export default function UserManagement() {
         type: "error",
       });
     }
-    
+
     setTimeout(() => setNotif(null), 3000);
   };
 
@@ -248,22 +283,23 @@ export default function UserManagement() {
           <h2 className="text-4xl font-bold text-[#4B2E1E] mb-6">
             User Management
           </h2>
-          
+
           {error && (
-            <div className={`px-4 py-3 rounded mb-4 ${
-              error.includes("✅") 
-                ? "bg-green-100 border border-green-400 text-green-700"
-                : error.includes("❌") 
-                ? "bg-red-100 border border-red-400 text-red-700"
-                : "bg-yellow-100 border border-yellow-400 text-yellow-700"
-            }`}>
+            <div
+              className={`px-4 py-3 rounded mb-4 ${
+                error.includes("✅")
+                  ? "bg-green-100 border border-green-400 text-green-700"
+                  : error.includes("❌")
+                  ? "bg-red-100 border border-red-400 text-red-700"
+                  : "bg-yellow-100 border border-yellow-400 text-yellow-700"
+              }`}
+            >
               {error}
             </div>
           )}
 
           <div className="mb-6 flex items-center">
             <div className="relative">
-              {/* Search Icon */}
               <img
                 src="/search_icon.png"
                 alt="Search Icon"
@@ -276,13 +312,11 @@ export default function UserManagement() {
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-96 rounded-lg border-none bg-[#C2A78C] px-10 py-3 text-[#4B2E1E] placeholder-[#4B2E1E] focus:outline-none pr-10"
               />
-              {/* Filter Icon */}
               <img
-                src="/filter.png" // Make sure you have this icon in your public folder
+                src="/filter.png"
                 alt="Filter Icon"
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 cursor-pointer"
                 onClick={() => {
-                  // Add filter functionality here if needed
                   console.log("Filter icon clicked");
                 }}
               />
@@ -290,13 +324,13 @@ export default function UserManagement() {
           </div>
 
           {loading && (
-            <div className="text-center text-[#4B2E1E] py-8">Loading users...</div>
+            <div className="text-center text-[#4B2E1E] py-8">
+              Loading users...
+            </div>
           )}
 
           {!loading && filteredUsers.length === 0 ? (
-            <div className="text-center text-[#4B2E1E] py-8">
-              No users found.
-            </div>
+            <div className="text-center text-[#4B2E1E] py-8">No users found.</div>
           ) : (
             <div className="space-y-6">
               {filteredUsers.map((user) => (
@@ -388,7 +422,6 @@ export default function UserManagement() {
             </div>
           )}
 
-          {/* Notification */}
           {notif && (
             <div
               className={`fixed top-8 right-8 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-semibold transition ${

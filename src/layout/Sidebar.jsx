@@ -52,6 +52,18 @@ const Sidebar = () => {
           <span className="material-icons"></span>
           Account Settings
         </NavLink>
+        <NavLink
+          to="/account"
+          className={({ isActive }) => `${base} ${isActive ? active : ""}`}
+        >
+          <img
+            src="/analytics.png"
+            alt="Analytics Logo"
+            className="w-30 h-30"
+          />
+          <span className="material-icons"></span>
+          Analytics
+        </NavLink>
       </nav>
       {/* Log Out */}
       <div className="px-8 py-6 mt-auto">
