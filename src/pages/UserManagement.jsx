@@ -48,6 +48,7 @@ export default function UserManagement() {
   const [search, setSearch] = useState("");
   const [expandedUserId, setExpandedUserId] = useState(null);
   const [userList, setUserList] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [userReports, setUserReports] = useState({});
   const [loading, setLoading] = useState(true);
   const [notif, setNotif] = useState(null);
@@ -82,7 +83,9 @@ export default function UserManagement() {
 
         if (response.ok) {
           const data = await response.json();
-          console.log("✅ SUCCESS! API Response:", data);
+
+          console.log("✅ SUCCESS! API Response:", data.documents);
+          setAllUsers(data.documents);
 
           if (data.success && Array.isArray(data.data)) {
             const transformedUsers = data.data.map((user) => ({
@@ -330,53 +333,55 @@ export default function UserManagement() {
           )}
 
           {!loading && filteredUsers.length === 0 ? (
-            <div className="text-center text-[#4B2E1E] py-8">No users found.</div>
+            <div className="text-center text-[#4B2E1E] py-8">
+              No users found.
+            </div>
           ) : (
             <div className="space-y-6">
-              {filteredUsers.map((user) => (
-                <div key={user.id}>
+              {allUsers.map((data, index) => (
+                <div key={index}>
                   <div
                     className="flex items-center justify-between rounded-xl bg-white px-6 py-4 shadow cursor-pointer"
-                    onClick={() => handleToggleExpand(user.id)}
+                    onClick={() => handleToggleExpand(data.$id)}
                   >
                     <div className="flex items-center gap-4">
                       <span className="text-lg font-poppins text-[#4B2E1E]">
-                        {user.id}
+                        {data.id}
                       </span>
-                      {user.image ? (
+                      {data.imageURL ? (
                         <img
-                          src={user.image}
-                          alt={user.name}
+                          src={data.imageURL}
+                          alt={data.fullName}
                           className="w-12 h-12 rounded-full object-cover"
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
                           <span className="text-gray-500 text-xl">
-                            {user.name.charAt(0).toUpperCase()}
+                            {data.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
                       <span className="text-lg font-poppins text-[#4B2E1E]">
-                        {user.name}
+                        {data.name}
                       </span>
                     </div>
                     <button
                       className={`rounded-lg px-6 py-2 text-base font-semibold transition ${
-                        user.status === "Enabled"
+                        data.status === "Enabled"
                           ? "bg-[#FF2D2D] text-white hover:bg-[#c82323]"
                           : "bg-[#7CB154] text-white hover:bg-[#5e8c3a]"
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleToggleStatus(user.id);
+                        handleToggleStatus(data.$id);
                       }}
                     >
-                      {user.status === "Enabled" ? "Disable" : "Enable"}
+                      {data.status === "Enabled" ? "Disable" : "Enable"}
                     </button>
                   </div>
-                  {expandedUserId === user.id && (
+                  {expandedUserId === data.$id && (
                     <div className="mx-4 mt-2 mb-4 rounded-xl bg-[#F6E6D0] p-6 shadow">
-                      {userReports[user.id]?.length > 0 ? (
+                      {userReports[data.$id]?.length > 0 ? (
                         <>
                           <table className="w-full text-left">
                             <thead>
@@ -398,16 +403,17 @@ export default function UserManagement() {
                             <tbody>
                               {userReports[user.id].map((report) => (
                                 <tr key={report.id}>
-                                  <td className="py-2">{report.id}</td>
-                                  <td className="py-2">{report.name}</td>
-                                  <td className="py-2">{report.date}</td>
-                                  <td className="py-2">"{report.reason}"</td>
+                                  <td className="py-2">{report.$id}</td>
+                                  <td className="py-2">{report.fullName}</td>
+                                  <td className="py-2">{report.$createdAt}</td>
+                                  <td className="py-2">"{report.role}</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
                           <div className="mt-2 text-sm text-[#4B2E1E]">
-                            Here is the list of accounts who reported the said user.
+                            Here is the list of accounts who reported the said
+                            user.
                           </div>
                         </>
                       ) : (
