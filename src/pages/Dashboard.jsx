@@ -166,16 +166,6 @@ export default function Dashboard() {
         <main className="p-10">
           <h2 className="text-5xl font-bold text-[#4B2E1E] mb-6">Dashboard</h2>
 
-          {/* API Status Message - KEPT */}
-          <div className={`px-4 py-3 rounded mb-6 ${apiStatus.includes("✅")
-            ? "bg-green-100 border border-green-400 text-green-700"
-            : apiStatus.includes("❌")
-              ? "bg-red-100 border border-red-400 text-red-700"
-              : "bg-yellow-100 border border-yellow-400 text-yellow-700"
-            }`}>
-            <strong>Note:</strong> {apiStatus}
-          </div>
-
           {/* New Header and Search Bar (matching the image) */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <h3 className="text-xl font-semibold text-[#4B2E1E] whitespace-nowrap">
