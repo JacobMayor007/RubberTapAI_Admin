@@ -3,7 +3,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/UserManagement";
 import AccountSettings from "./pages/AccountSettings";
-import Analytics from "./pages/Analytics"; // ⬅️ ADD THIS LINE
+import Analytics from "./pages/DataAnalyticsAdmin"; // ⬅️ ADD THIS LINE
 import ProtectedRoute from "./components/ProtectedRoute";
 import { account } from "./lib/appwrite";
 import { useEffect, useState } from "react";
