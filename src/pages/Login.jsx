@@ -11,30 +11,81 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async (event) => {
+    // try {
+    //   event.preventDefault();
+
+    //   setLoading(true);
+
+    //   const result = await account.createEmailPasswordSession({
+    //     email,
+    //     password,
+    //   });
+
+    //   if (!result) {
+    //     return;
+    //   }
+
+    //   // Optionally generate JWT if your backend needs it
+    //   const jwtResponse = await account.createJWT();
+    //   localStorage.setItem("token", jwtResponse.jwt);
+    //   navigate("/dashboard");
+    // } catch (err) {
+    //   console.error("Login request failed:", err);
+    //   setError(err);
+    //   throw err;
+    // }
+    event.preventDefault();
+
+    setLoading(true);
     try {
-      event.preventDefault();
+      console.log("API URL:", `${import.meta.env.VITE_API_URL}/api/v1/admin`);
 
-      setLoading(true);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const result = await account.createEmailPasswordSession({
-        email,
-        password,
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/admin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
 
-      if (!result) {
-        return;
+      clearTimeout(timeoutId);
+
+      const json = await res.json();
+
+      if (!res.ok || !json?.success) {
+        alert(json.title, json.message);
+        throw new Error(json?.message || `Login failed (${res.status})`);
       }
 
-      // Optionally generate JWT if your backend needs it
-      const jwtResponse = await account.createJWT();
-      localStorage.setItem("token", jwtResponse.jwt);
+      // ✅ Store the session data from backend response
+      localStorage.setItem("sessionId", json.data.sessionId);
+      localStorage.setItem("userId", json.data.userId);
+
+      // ✅ Navigate to dashboard on success
       navigate("/dashboard");
     } catch (err) {
       console.error("Login request failed:", err);
-      setError(err);
-      throw err;
+
+      if (err.name === "AbortError") {
+        setError("Request timeout - server is not responding");
+      } else if (err.message.includes("Failed to fetch")) {
+        setError(
+          "Cannot connect to server. Please check if the server is running."
+        );
+      } else {
+        setError(err.message || "Login failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
+  console.log("API URL:", `${import.meta.env.VITE_API_URL}/api/v1/admin`);
 
   return (
     <div className="flex min-h-screen">
