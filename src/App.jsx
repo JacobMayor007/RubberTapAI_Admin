@@ -3,34 +3,33 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/UserManagement";
 import AccountSettings from "./pages/AccountSettings";
-import Analytics from "./pages/Analytics"; // ⬅️ ADD THIS LINE
+import Analytics from "./pages/DataAnalyticsAdmin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { account } from "./lib/appwrite";
 import { useEffect, useState } from "react";
 
 export default function App() {
-  const [user, setUser] = useState(null); 
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const session = await account.getSession({ sessionId: "current" });
-        setUser(session); // user is logged in
-      } catch (err) {
-        setUser(false); // not logged in
-      }
-    })();
-  }, []);
+  const sessionId = localStorage.getItem("sessionId");
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/"
+          element={
+            sessionId ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
         <Route
           path="/login"
-          element={user ? <Navigate to="/dashboard" replace /> : <Login />}
+          element={sessionId ? <Navigate to="/dashboard" replace /> : <Login />}
         />
+
         <Route
           path="/dashboard"
           element={
@@ -39,6 +38,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/users"
           element={
@@ -47,6 +47,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/account"
           element={
