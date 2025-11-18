@@ -23,7 +23,9 @@ export default function AccountSettings() {
       <div className="ml-60 min-h-screen flex-1 bg-[#F6E6D0] p-6">
         <Navbar />
         <main className="p-10 mt-6 mx-7">
-          <h2 className="text-4xl text-[#4B2E1E] mb-16 font-bold">Account Settings</h2>
+          <h2 className="text-4xl text-[#4B2E1E] mb-16 font-bold">
+            Account Settings
+          </h2>
           <div className="rounded-xl bg-[#FFC98B] p-8 shadow mb-8 w-fulls flex justify-between">
             <div className="flex flex-col justify-start">
               <div className="mb-12">

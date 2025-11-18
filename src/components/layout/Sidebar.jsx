@@ -14,7 +14,8 @@ const Sidebar = () => {
     }
   };
   return (
-    <aside className="fixed left-0 top-0 h-screen w-65 bg-gradient-to-br from-[#7B4B2A] to-[#4B2E1E] shadow flex flex-col rounded-r-2xl">
+    // 💥 FIX: Added z-50 to ensure the sidebar is always on top and clickable
+    <aside className="fixed left-0 top-0 h-screen w-65 bg-gradient-to-br from-[#7B4B2A] to-[#4B2E1E] shadow flex flex-col rounded-r-2xl z-50">
       {/* Logo and Admin */}
       <div className="flex flex-col items-center py-8">
         <img src="/rubbertap-logo.png" alt="Logo" className="w-20 mb-2" />
@@ -40,7 +41,7 @@ const Sidebar = () => {
         >
           <img src="/user-logo.png" alt="Users Logo" className="w-10 h-10" />
           <span className="material-icons"></span>
-          User Management
+          Reported Users
         </NavLink>
         <NavLink
           to="/account"
@@ -64,7 +65,7 @@ const Sidebar = () => {
             className="w-10 h-10"
           />
           <span className="material-icons"></span>
-          Analytics
+          Feedbacks
         </NavLink>
       </nav>
       {/* Log Out */}

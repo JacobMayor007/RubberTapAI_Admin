@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import Button from "../ui/Button";
 
-const ChangePasswordForm: React.FC = () => {
+const ChangePasswordForm = () => {
   const [current, setCurrent] = useState("");
   const [newPass, setNewPass] = useState("");
   const [confirm, setConfirm] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (newPass !== confirm) {
       alert("Passwords do not match!");
