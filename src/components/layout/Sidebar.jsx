@@ -65,7 +65,7 @@ const Sidebar = () => {
             className="w-10 h-10"
           />
           <span className="material-icons"></span>
-          Feedbacks
+          Analytics
         </NavLink>
       </nav>
       {/* Log Out */}

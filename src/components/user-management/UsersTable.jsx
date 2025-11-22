@@ -1,30 +1,6 @@
 import React, { useState } from "react";
 import Button from "../ui/Button";
 
-const initialUsers = [
-  {
-    id: 1,
-    name: "Aiken Artigas",
-    email: "Artigas@example.com",
-    reports: 2,
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Louie Alberto Canen",
-    email: "Canen@example.com",
-    reports: 0,
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Jacob Mayor Tapere",
-    email: "Tapere@example.com",
-    reports: 5,
-    status: "disabled",
-  },
-];
-
 const UsersTable = () => {
   const [users, setUsers] = useState(initialUsers);
 

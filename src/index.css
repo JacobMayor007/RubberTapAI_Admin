@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+.pie-segment-1 {
+  clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 75% 100%);
+}
+
+.pie-segment-2 {
+  clip-path: polygon(50% 50%, 75% 100%, 100% 100%, 100% 0%, 50% 0%);
+}
+
+.pie-segment-3 {
+  clip-path: polygon(50% 50%, 100% 100%, 75% 100%, 25% 100%);
+}
+
+.pie-segment-4 {
+  clip-path: polygon(50% 50%, 25% 100%, 0% 100%, 0% 0%, 50% 0%);
+}

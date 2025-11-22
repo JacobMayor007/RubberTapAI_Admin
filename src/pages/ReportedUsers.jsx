@@ -1,11 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import Navbar from "../components/layout/Navbar";
+import { Modal } from "antd";
+import "@ant-design/v5-patch-for-react-19";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
-const API_KEY = import.meta.env.VITE_ADMIN_API_KEY;
-
-
 const userId = localStorage.getItem("userId");
 
 export default function UserManagement() {
@@ -17,7 +16,9 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [notif, setNotif] = useState(null);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState("Most reported"); 
+  const [sortBy, setSortBy] = useState("Most reported");
+  const [reportModal, setReportModal] = useState(false);
+  const [user, setUser] = useState("");
 
   console.log("BASE URL: ", typeof BASE_URL);
 
@@ -72,7 +73,8 @@ export default function UserManagement() {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(
-            `HTTP error! Status: ${response.status}, Message: ${errorData.message || "Unknown server error"
+            `HTTP error! Status: ${response.status}, Message: ${
+              errorData.message || "Unknown server error"
             }`
           );
         }
@@ -111,7 +113,7 @@ export default function UserManagement() {
           return acc;
         }, {});
 
-        const finalUsers = Object.values(groupedUsers).map(user => ({
+        const finalUsers = Object.values(groupedUsers).map((user) => ({
           ...user,
           reportCount: user.reports.length,
         }));
@@ -127,8 +129,8 @@ export default function UserManagement() {
     };
 
     fetchReportedUsers();
-  }, [admin]); 
-  
+  }, [admin]);
+
   const filteredUsers = userReportsList.filter(
     (user) =>
       user.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -141,7 +143,7 @@ export default function UserManagement() {
     } else if (sortBy === "Recent reports") {
       return b.latestReportDate.getTime() - a.latestReportDate.getTime();
     }
-    return 0; 
+    return 0;
   });
 
   const handleToggleStatus = async (id, currentStatus, e) => {
@@ -216,53 +218,41 @@ export default function UserManagement() {
     setTimeout(() => setNotif(null), 5000);
   };
 
-  
-  const handleWarnUser = async (id, e) => {
-    e.stopPropagation();
-    const targetUser = userReportsList.find((u) => u.id === id);
-    const targetName = targetUser?.name || "User";
-
-    setNotif({
-      message: `Sending warning to ${targetName}...`,
-      type: "warning",
-    });
-
+  const handleWarnUser = async () => {
     try {
-      if (!API_KEY) {
-        throw new Error(
-          "Missing VITE_ADMIN_API_KEY. Check your .env configuration."
-        );
-      }
-
       const requestBody = {
         userId: admin.$id,
-        API_KEY: API_KEY,
-        warnedId: id.toString(),
+        API_KEY: admin.API_KEY,
+        warnedId: user,
         email: admin.email,
-        reason: "Admin warning: Due to multiple reports." 
       };
 
-      const response = await fetch(`${BASE_URL}/api/v1/admin/warn`, {
-        method: "POST", 
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
+      console.log("Hello: ", requestBody);
 
-      const result = await response.json().catch(() => ({}));
+      const response = await fetch(
+        `http://192.168.1.17:3000/api/v1/admin/warn`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      const result = await response.json();
 
       if (!response.ok || !result.success) {
-        const errorMessage = result.message || `Failed to warn user. HTTP ${response.status}.`;
+        const errorMessage =
+          result.message || `Failed to warn user. HTTP ${response.status}.`;
         throw new Error(errorMessage);
       }
 
       setNotif({
-        message: `Successfully sent a warning to ${targetName}.`,
+        message: `Successfully sent a warning.`,
         type: "success",
       });
-
     } catch (err) {
       console.error("Error warning user:", err);
       setNotif({
@@ -272,7 +262,6 @@ export default function UserManagement() {
     }
     setTimeout(() => setNotif(null), 5000);
   };
-
 
   const fetchReportersForUser = useCallback(
     (reportedId) => {
@@ -310,16 +299,19 @@ export default function UserManagement() {
 
   const expandedReports = expandedUserId ? reportersCache[expandedUserId] : [];
 
-
   const renderReportsTable = (reports) => (
-    <table className="w-full text-left table-fixed border-collapse"> 
+    <table className="w-full text-left table-fixed border-collapse">
       <thead>
         <tr className="border-b-0">
-          <th className="py-2 text-[#4B2E1E] font-semibold w-[15%] border-none">ID</th>
+          <th className="py-2 text-[#4B2E1E] font-semibold w-[15%] border-none">
+            ID
+          </th>
           <th className="py-2 text-[#4B2E1E] font-semibold w-[25%] border-none">
             Account Name
           </th>
-          <th className="py-2 text-[#4B2E1E] font-semibold w-[15%] border-none">Date</th>
+          <th className="py-2 text-[#4B2E1E] font-semibold w-[15%] border-none">
+            Date
+          </th>
           <th className="py-2 text-[#4B2E1E] font-semibold w-[45%] border-none">
             Report Reason
           </th>
@@ -347,9 +339,9 @@ export default function UserManagement() {
       <div className="ml-60 min-h-screen flex-1 bg-[#F6E6D0] p-6">
         <Navbar />
         {/* Main content area: explicitly remove top border if any */}
-        <main className="border-t-0"> 
+        <main className="border-t-0">
           {/* Inner container to restore the removed p-10 padding */}
-          <div className="p-10"> 
+          <div className="p-10">
             <h2 className="text-4xl font-bold text-[#4B2E1E] mb-6">
               Reported Users
             </h2>
@@ -357,7 +349,7 @@ export default function UserManagement() {
             <div className="mb-6 flex items-center justify-between">
               <div className="relative w-96">
                 <img
-                  src="/search_icon.png" 
+                  src="/search_icon.png"
                   alt="Search Icon"
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5"
                 />
@@ -396,7 +388,7 @@ export default function UserManagement() {
               </div>
             )}
 
-            <div className="space-y-4"> 
+            <div className="space-y-4">
               {sortedAndFilteredUsers.length === 0 && !loading && !error && (
                 <div className="text-center text-[#4B2E1E] py-8">
                   No reported users found.
@@ -406,13 +398,16 @@ export default function UserManagement() {
               {sortedAndFilteredUsers.map((user) => (
                 <div key={user.id}>
                   <div
-                    className={`flex items-center justify-between rounded-xl bg-white px-6 py-4 shadow cursor-pointer transition ${expandedUserId === user.id
+                    className={`flex items-center justify-between rounded-xl bg-white px-6 py-4 shadow cursor-pointer transition ${
+                      expandedUserId === user.id
                         ? "ring-2 ring-offset-2 ring-[#C2A78C]"
                         : ""
-                      }`}
-                    onClick={() => handleToggleExpand(user.id)}
+                    }`}
                   >
-                    <div className="flex items-center gap-6 flex-1">
+                    <div
+                      onClick={() => handleToggleExpand(user.id)}
+                      className="flex items-center gap-6 flex-1"
+                    >
                       <div className="flex items-center gap-4 min-w-[300px]">
                         <span className="text-lg font-poppins text-[#4B2E1E] min-w-[200px] truncate">
                           {user.id}
@@ -436,27 +431,30 @@ export default function UserManagement() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-[#4B2E1E]">{user.reportCount}</span>
+                        <span className="text-lg font-bold text-[#4B2E1E]">
+                          {user.reportCount}
+                        </span>
                         <span className="text-md text-gray-500">Reports</span>
                       </div>
-
                     </div>
 
                     <div className="flex items-center gap-4">
                       <button
                         className="rounded-lg px-6 py-2 text-base font-semibold transition bg-[#FF8418] text-white hover:bg-[#e09115] whitespace-nowrap"
-                        onClick={(e) => {
-                          handleWarnUser(user.id, e);
+                        onClick={() => {
+                          setReportModal(true);
+                          setUser(user.id);
                         }}
                       >
                         Warn user
                       </button>
 
                       <button
-                        className={`rounded-lg px-6 py-2 text-base font-semibold transition whitespace-nowrap ${user.status === "Enabled"
+                        className={`rounded-lg px-6 py-2 text-base font-semibold transition whitespace-nowrap ${
+                          user.status === "Enabled"
                             ? "bg-[#FF2D2D] text-white hover:bg-[#c82323]"
                             : "bg-[#7CB154] text-white hover:bg-[#5e8c3a]"
-                          }`}
+                        }`}
                         onClick={(e) => {
                           handleToggleStatus(user.id, user.status, e);
                         }}
@@ -490,9 +488,13 @@ export default function UserManagement() {
             {notif && (
               <div
                 className={`fixed top-8 right-8 z-50 px-6 py-3 rounded-lg shadow-lg font-semibold transition 
-                  ${notif.type === "success" ? "bg-[#7CB154] text-white" :
-                  notif.type === "error" ? "bg-red-500 text-white" :
-                    "bg-[#F9A825] text-white"}`}
+                  ${
+                    notif.type === "success"
+                      ? "bg-[#7CB154] text-white"
+                      : notif.type === "error"
+                      ? "bg-red-500 text-white"
+                      : "bg-[#F9A825] text-white"
+                  }`}
               >
                 {notif.message}
               </div>
@@ -500,6 +502,20 @@ export default function UserManagement() {
           </div>
         </main>
       </div>
+      <Modal
+        open={reportModal}
+        onCancel={() => setReportModal(false)}
+        onOk={() => {
+          setReportModal(false);
+          handleWarnUser();
+        }}
+        okText="Yes"
+        cancelText="No"
+      >
+        <h1 className="text-lg font-bold text-center mt-5">
+          Do you want to warn this user?
+        </h1>
+      </Modal>
     </div>
   );
 }
