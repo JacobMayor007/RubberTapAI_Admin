@@ -1,12 +1,11 @@
 import { BrowserRouter, Route, Navigate, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import UserManagement from "./pages/UserManagement";
+import UserManagement from "./pages/ReportedUsers";
 import AccountSettings from "./pages/AccountSettings";
-import Analytics from "./pages/DataAnalyticsAdmin"; 
+import Analytics from "./pages/Feedback";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { account } from "./lib/appwrite";
-import { useEffect, useState } from "react";
+import AllAnalytics from "./pages/Analytics";
 
 export default function App() {
   const sessionId = localStorage.getItem("sessionId");
@@ -61,7 +60,7 @@ export default function App() {
           path="/analytics"
           element={
             <ProtectedRoute>
-              <Analytics />
+              <AllAnalytics />
             </ProtectedRoute>
           }
         />

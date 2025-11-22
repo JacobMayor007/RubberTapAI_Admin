@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import Navbar from "../components/layout/Navbar";
-import { account, database } from "../lib/appwrite";
+
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function AccountSettings() {
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -10,11 +11,24 @@ export default function AccountSettings() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const getUser = async () => {
-      const result = await account.get();
-      setUser(result);
+    const fetchAdminData = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+
+        const result = await fetch(`${BASE_URL}/api/v1/users/user/${userId}`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        const dataAdmin = await result.json();
+        setUser(dataAdmin);
+      } catch (error) {
+        console.error(error);
+      }
     };
-    getUser();
+    fetchAdminData();
   }, []);
 
   return (
@@ -23,12 +37,14 @@ export default function AccountSettings() {
       <div className="ml-60 min-h-screen flex-1 bg-[#F6E6D0] p-6">
         <Navbar />
         <main className="p-10 mt-6 mx-7">
-          <h2 className="text-4xl text-[#4B2E1E] mb-16 font-bold">Account Settings</h2>
+          <h2 className="text-4xl text-[#4B2E1E] mb-16 font-bold">
+            Account Settings
+          </h2>
           <div className="rounded-xl bg-[#FFC98B] p-8 shadow mb-8 w-fulls flex justify-between">
             <div className="flex flex-col justify-start">
               <div className="mb-12">
                 <span className="text-xl">Username:</span>
-                <span className="ml-2 text-xl">{user?.name}</span>
+                <span className="ml-2 text-xl">{user?.fullName}</span>
               </div>
               <div className="mb-2">
                 <span className="text-xl">Email:</span>
@@ -61,7 +77,7 @@ export default function AccountSettings() {
 
                   <div className="mb-4 flex items-center">
                     <label className="w-44 text-[#4B2E1E] font-medium">
-                      Username:
+                      Username: {user?.name}
                     </label>
                     <input
                       type="text"
