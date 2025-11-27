@@ -3,9 +3,9 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/ReportedUsers";
 import AccountSettings from "./pages/AccountSettings";
-import Analytics from "./pages/Feedback";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AllAnalytics from "./pages/Analytics";
+import AllFeedback from "./pages/AllFeedback";
+import AnalyticsTable from "./pages/AnalyticsTable";
 
 export default function App() {
   const sessionId = localStorage.getItem("sessionId");
@@ -60,7 +60,16 @@ export default function App() {
           path="/analytics"
           element={
             <ProtectedRoute>
-              <AllAnalytics />
+              <AllFeedback />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/analytics-table"
+          element={
+            <ProtectedRoute>
+              <AnalyticsTable />
             </ProtectedRoute>
           }
         />

@@ -184,18 +184,15 @@ export default function UserManagement() {
       };
 
       console.log("Sending status toggle request with payload:", requestBody);
-      // ${BASE_URL}
-      const response = await fetch(
-        `http://192.168.1.21:3000/api/v1/admin/user`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+
+      const response = await fetch(`${BASE_URL}/api/v1/admin/user`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       const result = await response.json();
 
