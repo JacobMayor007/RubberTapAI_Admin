@@ -38,8 +38,6 @@ export default function Login() {
 
     setLoading(true);
     try {
-      console.log("API URL:", `${import.meta.env.VITE_API_URL}/api/v1/admin`);
-
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -66,7 +64,6 @@ export default function Login() {
       localStorage.setItem("sessionId", json.data.sessionId);
       localStorage.setItem("userId", json.data.userId);
 
-      // ✅ Navigate to dashboard on success
       navigate("/dashboard");
     } catch (err) {
       console.error("Login request failed:", err);
@@ -84,8 +81,6 @@ export default function Login() {
       setLoading(false);
     }
   };
-
-  console.log("API URL:", `${import.meta.env.VITE_API_URL}/api/v1/admin`);
 
   return (
     <div className="flex min-h-screen">

@@ -1,335 +1,437 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sidebar from "../components/layout/Sidebar";
-import Navbar from "../components/layout/Navbar";
-import { account } from "../lib/appwrite";
+import PieChart from "../components/ui/PieChart";
+import dayjs from "dayjs";
+import { Leaf, Users, TrendingUp, Calendar } from "lucide-react";
+import { DatePicker } from "antd";
+const { RangePicker } = DatePicker;
 
-const fallbackFeedbacks = [
-  {
-    id: 1,
-    name: "Louie Alberto Canen",
-    image: "/louie.png",
-    time: "10 hours ago",
-    rating: 5,
-    feedback:
-      "The disease detection feature saved my entire harvest! Identified leaf spot early and the treatment recommendations worked perfectly. Buyers are now paying premium prices for my high-quality latex.",
-  },
-  {
-    id: 2,
-    name: "Jacob Mayor Tapere",
-    image: "/jacob.png",
-    time: "15 hours ago",
-    rating: 5,
-    feedback:
-      "As a latex processor, this app helps me verify the quality of rubber tree plantations before purchasing. The health reports from farmers using this app give me confidence in the raw material quality.",
-  },
-  {
-    id: 3,
-    name: "Aiken Artigas",
-    image: "/aiken.png",
-    time: "7 hours ago",
-    rating: 5,
-    feedback:
-      "My latex yield increased by 30% after following the app's disease prevention tips. Buyers are now competing for my produce because of the consistent quality and health certification.",
-  },
-  {
-    id: 4,
-    name: "Joy Anne Lutero",
-    image: "",
-    time: "10 hours ago",
-    rating: 5,
-    feedback:
-      "This app has streamlined our sourcing process. We can now identify reliable farmers with healthy plantations, reducing our quality control costs and ensuring better latex for our manufacturing.",
-  },
-];
+import Loading from "../components/ui/Loading";
 
-export default function Dashboard() {
-  const [search, setSearch] = useState("");
-  const [expandedId, setExpandedId] = useState(null);
-  const [apiStatus, setApiStatus] = useState("Checking backend connection...");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(3);
-  const [feedbacks, setFeedbacks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("feedbacks");
+const BASE_URL = import.meta.env.VITE_API_URL;
+const userId = localStorage.getItem("userId");
+
+export default function AllAnalytics() {
+  const btnRef = useRef(null);
+  const [analytics, setAnalytics] = useState([]);
+  const [dropdown, setDropdown] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [dateRange, setDateRange] = useState([
+    dayjs().subtract(1, "month"),
+    dayjs(),
+  ]);
+  const totalUser = [];
+  let leafCases = [];
+
+  var anthracnose = 0,
+    leafSpot = 0,
+    oidium = 0;
 
   useEffect(() => {
-
-    const loadData = async () => {
-
+    const fetchAdminData = async () => {
       try {
-        const user = await account.get();
+        setLoading(true);
+        const result = await fetch(`${BASE_URL}/api/v1/users/user/${userId}`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        });
 
-        const adminData = {
-          userId: user.$id,
-          API_KEY: import.meta.env.VITE_ADMIN_API_KEY,
-          email: user.email,
-        };
+        const dataAdmin = await result.json();
 
-        console.log("🔑 Fetching data directly from API...");
-        console.log("📦 Admin Data:", adminData);
-
-        // Load feedbacks - Skip since endpoint returns 404
-        console.log(
-          "📋 Using fallback feedback data (rates endpoint returns 404)"
-        );
-        setFeedbacks(fallbackFeedbacks);
-
-        // The reports fetching logic was removed in the previous step, so it is kept removed.
-
-        setApiStatus("✅ Data loaded successfully");
+        if (dataAdmin) {
+          fetchAnalytics(dataAdmin);
+        }
       } catch (error) {
-        console.error("🚨 Main error:", error);
-        setFeedbacks(fallbackFeedbacks);
-        setApiStatus("❌ Error loading data. Using demo data.");
-      } finally {
-        setLoading(false);
+        console.error(error);
+      }
+    };
+    fetchAdminData();
+  }, [userId]);
+
+  useEffect(() => {
+    const closeDropdown = (e) => {
+      if (!btnRef.current?.contains(e.target)) {
+        setDropdown(false);
       }
     };
 
-    setActiveTab("feedbacks");
-    loadData();
-  
-  }, []);
+    document.body.addEventListener("mousedown", closeDropdown);
 
-  const toggleExpand = (id) => {
-    setExpandedId((prevId) => (prevId === id ? null : id));
+    return () => {
+      document.body.removeEventListener("mouseover", closeDropdown);
+    };
+  }, [dropdown]);
+
+  const fetchAnalytics = async (admin) => {
+    try {
+      const requestBody = {
+        userId: admin?.$id,
+        API_KEY: admin?.API_KEY,
+        email: admin?.email,
+      };
+
+      const result = await fetch(`${BASE_URL}/api/v1/admin/analytics`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await result.json();
+      const filtered = data.map((data) => ({
+        ...data,
+        $createdAt: dayjs(data?.$createdAt),
+      }));
+      setAnalytics(filtered);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Feedback data filtering and pagination
-  const filteredFeedbacks = feedbacks.filter(
-    (f) =>
-      f.name.toLowerCase().includes(search.toLowerCase()) ||
-      f.id.toString().includes(search) ||
-      f.feedback.toLowerCase().includes(search.toLowerCase())
-  );
+  const filterAnalytics = analytics.filter((data) => {
+    if (!dateRange || dateRange.length !== 2) return true;
 
-  const feedbackTotalPages = Math.ceil(filteredFeedbacks.length / itemsPerPage);
-  const feedbackStartIndex = (currentPage - 1) * itemsPerPage;
-  const currentFeedbacks = filteredFeedbacks.slice(
-    feedbackStartIndex,
-    feedbackStartIndex + itemsPerPage
-  );
+    const [start, end] = dateRange;
+    return (
+      data.$createdAt.isAfter(start.startOf("day")) &&
+      data.$createdAt.isBefore(end.endOf("day"))
+    );
+  });
 
-  const getPageNumbers = (totalPages) => {
-    const pageNumbers = [];
-    const maxVisiblePages = 5;
-
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pageNumbers.push(i);
+  for (let i = 0; i < filterAnalytics.length; i++) {
+    for (let j = i; j < filterAnalytics.length; j++) {
+      if (filterAnalytics[i]?.userId !== filterAnalytics[j + 1]?.userId) {
+        totalUser.push(filterAnalytics[i]);
       }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pageNumbers.push(i);
-        }
-        pageNumbers.push("...");
-        pageNumbers.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pageNumbers.push(1);
-        pageNumbers.push("...");
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pageNumbers.push(i);
-        }
+      break;
+    }
+  }
+
+  for (let i = 0; i < filterAnalytics.length; i++) {
+    switch (filterAnalytics[i].className) {
+      case "Anthracnose":
+        anthracnose++;
+        break;
+      case "Oidium Heveae":
+        oidium++;
+        break;
+      case "Leaf Spot":
+        leafSpot++;
+        break;
+    }
+  }
+
+  const cityCases = {};
+
+  for (let i = 0; i < filterAnalytics.length; i++) {
+    const city = filterAnalytics[i].city;
+    if (filterAnalytics[i].className !== "Healthy") {
+      if (!city) continue;
+
+      if (cityCases[city] === undefined) {
+        cityCases[city] = 1;
       } else {
-        pageNumbers.push(1);
-        pageNumbers.push("...");
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pageNumbers.push(i);
-        }
-        pageNumbers.push("...");
-        pageNumbers.push(totalPages);
+        cityCases[city]++;
       }
     }
+  }
 
-    return pageNumbers;
-  };
+  for (const city in cityCases) {
+    leafCases.push({
+      city: city,
+      count: cityCases[city],
+    });
+  }
 
-  const handlePageChange = (page) => {
-    if (page === "...") return;
-    setCurrentPage(page);
-  };
+  leafCases.sort((a, b) => b.count - a.count);
 
-  const goToNextPage = () => {
-    if (currentPage < feedbackTotalPages) {
-      setCurrentPage(currentPage + 1);
+  const totalLeafPerUser =
+    totalUser.length > 0
+      ? (filterAnalytics.length / totalUser.length).toFixed(2)
+      : 0;
+
+  const handleDateRangeChange = (dates) => {
+    if (dates) {
+      setDateRange(dates);
     }
   };
 
-  const goToPrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+  console.log(totalUser);
 
-  const currentTotalPages = feedbackTotalPages;
+  const maxCases =
+    leafCases.length > 0 ? Math.max(...leafCases.map((c) => c.count)) : 1;
 
   return (
-    <div className="flex overflow-x-hidden">
+    <div className="flex overflow-x-hidden h-screen bg-gradient-to-br from-[#F6E6D0] via-[#F5E5CC] to-[#F0DFC8]">
       <Sidebar />
-      <div className="flex-1 min-h-screen bg-[#F6E6D0] p-6 ml-0 md:ml-60">
-        <Navbar />
-        <main className="p-10">
-          <h2 className="text-5xl font-bold text-[#4B2E1E] mb-6">Dashboard</h2>
+      {loading ? (
+        <div className="flex-1 flex flex-col py-6 px-12 ml-0 md:ml-60 pt-32 items-center justify-center">
+          <Loading />
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col py-8 px-6 md:px-12 ml-0 md:ml-60 pt-24 md:pt-10 animate-fadeIn">
+          <div className="fixed top-0 right-0 w-96 h-96 bg-[#D4A373]/10 rounded-full blur-3xl -z-10" />
+          <div className="fixed bottom-0 left-0 w-96 h-96 bg-[#8FAA52]/10 rounded-full blur-3xl -z-10" />
 
-          {/* New Header and Search Bar (matching the image) */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <h3 className="text-xl font-semibold text-[#4B2E1E] whitespace-nowrap">
-              User Feedbacks and Reports
-            </h3>
-
-            <div className="relative w-full md:w-72">
-              <img
-                src="/search_icon.png"
-                alt="Search Icon"
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5"
-              />
-              <input
-                type="text"
-                placeholder="Search"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setCurrentPage(1);
-                }}
-                // Custom styles matching the search bar color from the image
-                className="w-full rounded-lg border-none bg-[#C2A78C] px-10 py-3 text-[#4B2E1E] placeholder-[#4B2E1E] focus:outline-none focus:ring-2 focus:ring-[#4B2E1E]"
-              />
+          {/* Header */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+            <div className="space-y-2">
+              <h1 className="font-poppins font-bold text-4xl text-[#5D4E37] tracking-tight">
+                Data Analytics
+              </h1>
+              <p className="text-[#8B7355] text-base flex items-center gap-2">
+                <Leaf className="w-4 h-4" />
+                Monitor rubber tree disease trends and insights
+              </p>
+            </div>
+            <div className="bg-white/60 backdrop-blur-md border border-[#D4A373]/30 rounded-2xl px-6 py-4 shadow-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <Calendar className="w-4 h-4 text-[#8B7355]" />
+                <h2 className="font-poppins font-semibold text-sm text-[#8B7355] uppercase tracking-wide">
+                  Period
+                </h2>
+              </div>
+              <p className="text-[#5D4E37] font-bold text-lg">
+                {dateRange[0]?.format("MMM DD")} -{" "}
+                {dateRange[1]?.format("MMM DD, YYYY")}
+              </p>
             </div>
           </div>
 
-          {loading && (
-            <div className="text-center text-[#4B2E1E] py-8">
-              Loading data...
-            </div>
-          )}
-
-          {/* FEEDBACKS CONTENT */}
-          {activeTab === "feedbacks" && (
-            <>
-              {!loading && currentFeedbacks.length === 0 ? (
-                <div className="text-center text-[#4B2E1E] py-8">
-                  No feedbacks found.
+          <div className="grid grid-cols-1 lg:grid-cols-2 flex-1 gap-8">
+            {/* Left Column - Pie Chart */}
+            <div className="bg-white/90 backdrop-blur-md drop-shadow-2xl p-8 rounded-[2rem] flex flex-col border-2 border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-all duration-300">
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-gradient-to-br from-[#C2794D] to-[#D4A373] p-2.5 rounded-xl shadow-lg">
+                    <TrendingUp className="text-white w-5 h-5" />
+                  </div>
+                  <h2 className="font-poppins font-bold text-xl text-[#5D4E37]">
+                    Disease Distribution
+                  </h2>
                 </div>
-              ) : (
-                <div className="space-y-4 mb-8">
-                  {currentFeedbacks.map((f) => {
-                    const isExpanded = expandedId === f.id;
-                    const displayFeedback =
-                      f.feedback.length > 200 && !isExpanded
-                        ? f.feedback.slice(0, 200) + "..."
-                        : f.feedback;
+                <p className="text-[#8B7355] text-sm mb-6 ml-14">
+                  Visual breakdown of detected leaf diseases
+                </p>
 
-                    return (
-                      <div
-                        key={f.id}
-                        onClick={() => toggleExpand(f.id)}
-                        // Adjusted background/shadow to better match image style
-                        className="flex rounded-xl bg-white p-4 shadow-md transition-all duration-300 cursor-pointer hover:shadow-lg min-w-0"
-                      >
-                        {/* Wrapper for the primary columns (Avatar, Name, Time, Rating) */}
-                        <div className="flex items-center w-full min-w-0">
-                          {/* Avatar + Name */}
-                          <div className="flex items-center gap-3 w-64 shrink-0 min-w-[150px]">
-                            {f.image ? (
-                              <img
-                                src={f.image}
-                                alt={f.name}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center shrink-0">
-                                <span className="text-gray-500 text-lg">
-                                  {f.name.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                            )}
-                            <span className="text-sm font-semibold text-[#4B2E1E] truncate">
-                              {f.name}
-                            </span>
-                          </div>
+                <div className="relative">
+                  <label className="text-xs text-[#8B7355] font-semibold mb-3 block uppercase tracking-wider md:flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5" />
+                    Date Range Filter
+                  </label>
+                  <RangePicker
+                    value={dateRange}
+                    onChange={handleDateRangeChange}
+                    format="MMM DD, YYYY"
+                    className="w-full shadow-md hover:shadow-lg transition-shadow duration-200"
+                    size="large"
+                    placeholder={["Start Date", "End Date"]}
+                    allowClear={false}
+                    style={{
+                      borderRadius: "16px",
+                      border: "2px solid rgba(212, 163, 115, 0.2)",
+                    }}
+                  />
+                </div>
+              </div>
 
-                          {/* Time (Smaller/less dominant, moved next to name visually) */}
-                          <div className="w-24 text-sm text-gray-500 shrink-0 hidden sm:block">
-                            {f.time}
-                          </div>
+              <div className="flex-1 flex items-center justify-center py-4">
+                <PieChart
+                  anthracnose={anthracnose}
+                  leafSpot={leafSpot}
+                  oidium={oidium}
+                />
+              </div>
+            </div>
 
-                          {/* Rating (Central, prominent) */}
-                          <div className="flex items-center gap-0.5 w-32 justify-center shrink-0 text-xl">
-                            {[...Array(f.rating)].map((_, i) => (
-                              <span key={i} className="text-yellow-400">
-                                &#9733;
+            {/* Right Column - Stats and Bar Chart */}
+            <div className="flex flex-col gap-6">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-3 gap-5">
+                {/* Total Users Card */}
+                <div className="group bg-gradient-to-br from-white via-white to-[#C2794D]/5 backdrop-blur-md drop-shadow-xl rounded-[1.5rem] p-5 flex flex-col items-center justify-center border-2 border-white/60 hover:border-[#C2794D]/40 hover:scale-105 hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-2xl">
+                  <div className="bg-gradient-to-br from-[#C2794D] to-[#D4A373] p-4 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Users className="text-white" size={28} strokeWidth={2.5} />
+                  </div>
+                  <h1 className="text-4xl font-black text-[#5D4E37] mb-2">
+                    {totalUser.length}
+                  </h1>
+                  <p className="text-xs font-semibold text-[#8B7355] text-center uppercase tracking-wide">
+                    Total Users
+                  </p>
+                </div>
+
+                {/* Scans per User Card */}
+                <div className="group bg-gradient-to-br from-white via-white to-[#8FAA52]/5 backdrop-blur-md drop-shadow-xl rounded-[1.5rem] p-5 flex flex-col items-center justify-center border-2 border-white/60 hover:border-[#8FAA52]/40 hover:scale-105 hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-2xl">
+                  <div className="bg-gradient-to-br from-[#8FAA52] to-[#A8C686] p-4 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Leaf className="text-white" size={28} strokeWidth={2.5} />
+                  </div>
+                  <h1 className="text-4xl font-black text-[#5D4E37] mb-2">
+                    {totalLeafPerUser}
+                  </h1>
+                  <p className="text-xs font-semibold text-[#8B7355] text-center uppercase tracking-wide">
+                    Scans/User
+                  </p>
+                </div>
+
+                {/* Disease Cases Card */}
+                <div className="group bg-gradient-to-br from-white via-white to-[#DEB887]/5 backdrop-blur-md drop-shadow-xl rounded-[1.5rem] p-5 flex flex-col items-center justify-center border-2 border-white/60 hover:border-[#DEB887]/40 hover:scale-105 hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-2xl">
+                  <div className="bg-gradient-to-br from-[#CD853F] to-[#DEB887] p-4 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <TrendingUp
+                      className="text-white"
+                      size={28}
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                  <h1 className="text-4xl font-black text-[#5D4E37] mb-2">
+                    {anthracnose + oidium + leafSpot}
+                  </h1>
+                  <p className="text-xs font-semibold text-[#8B7355] text-center uppercase tracking-wide">
+                    Disease Cases
+                  </p>
+                </div>
+              </div>
+
+              {/* Local Occurrence Bar Chart */}
+              <div className="flex-1 bg-white/90 backdrop-blur-md drop-shadow-2xl rounded-[2rem] p-8 border-2 border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-all duration-300 overflow-hidden">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-gradient-to-br from-[#8FAA52] to-[#A8C686] p-2.5 rounded-xl shadow-lg">
+                    <Leaf className="text-white w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-poppins font-bold text-xl text-[#5D4E37]">
+                      Geographic Distribution
+                    </h2>
+                    <p className="text-[#8B7355] text-xs">
+                      Disease cases by location
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4 overflow-y-auto max-h-[420px] pr-3 custom-scrollbar">
+                  {leafCases.length > 0 ? (
+                    leafCases.map((data, index) => {
+                      const widthPercent = (data.count / maxCases) * 100;
+                      const barColors = [
+                        "from-[#C2794D] via-[#D4A373] to-[#E6B894]",
+                        "from-[#8FAA52] via-[#A8C686] to-[#C5E1A5]",
+                        "from-[#CD853F] via-[#DEB887] to-[#F5DEB3]",
+                      ];
+                      const bgColor = barColors[index % barColors.length];
+
+                      return (
+                        <div
+                          key={index}
+                          className="group hover:bg-gradient-to-r hover:from-[#F5DEB3]/20 hover:to-transparent p-4 rounded-2xl transition-all duration-300 border-2 border-transparent hover:border-[#D4A373]/20"
+                          style={{
+                            animation: `slideIn 0.5s ease-out ${
+                              index * 0.1
+                            }s both`,
+                          }}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-bold text-[#5D4E37] truncate max-w-[140px] group-hover:text-[#C2794D] transition-colors">
+                              {data.city}
+                            </h3>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black text-[#5D4E37]">
+                                {data.count}
                               </span>
-                            ))}
+                              <span className="text-[10px] font-semibold text-white bg-gradient-to-r from-[#C2794D] to-[#D4A373] px-3 py-1.5 rounded-full shadow-md">
+                                {data.count === 1 ? "CASE" : "CASES"}
+                              </span>
+                            </div>
                           </div>
-
-                          {/* Feedback text column (takes up the rest of the space) */}
-                          <div className="text-sm text-[#4B2E1E] flex-1 px-4 min-w-[200px]">
-                            {/* The feedback content needs to be inline with the other items to match the image structure */}
-                            {displayFeedback}
+                          <div className="bg-gradient-to-r from-[#E6D5C3]/60 to-[#F5DEB3]/40 h-4 rounded-full overflow-hidden shadow-inner">
+                            <div
+                              className={`bg-gradient-to-r ${bgColor} h-full rounded-full transition-all duration-700 ease-out shadow-lg relative overflow-hidden`}
+                              style={{ width: `${widthPercent}%` }}
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                            </div>
                           </div>
                         </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 gap-4">
+                      <div className="bg-[#F5DEB3]/20 p-4 rounded-2xl">
+                        <Leaf className="text-[#8B7355] w-8 h-8" />
                       </div>
-                    );
-                  })}
+                      <p className="text-[#8B7355] text-sm font-medium">
+                        No disease cases found in selected period
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </>
-          )}
-
-          {/* Pagination and Status */}
-          {/* MODIFIED: Changed justify-between to justify-center and removed the status message to center the pagination */}
-          <div className="flex justify-center items-center mt-8">
-            {currentTotalPages > 1 && (
-              <div className="flex justify-center items-center space-x-2">
-                {/* Previous Button */}
-                <button
-                  onClick={goToPrevPage}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-2 rounded-lg border ${
-                    currentPage === 1
-                      ? "text-gray-400 border-gray-300 cursor-not-allowed"
-                      : "text-[#4B2E1E] border-[#4B2E1E] hover:bg-[#4B2E1E] hover:text-white"
-                  }`}
-                >
-                  &lt;
-                </button>
-
-                {/* Page Numbers */}
-                {getPageNumbers(currentTotalPages).map((page, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handlePageChange(page)}
-                    className={`px-3 py-2 rounded-lg border ${
-                      page === currentPage
-                        ? "bg-[#4B2E1E] text-white border-[#4B2E1E]"
-                        : page === "..."
-                        ? "text-gray-500 border-transparent cursor-default"
-                        : "text-[#4B2E1E] border-[#4B2E1E] hover:bg-[#4B2E1E] hover:text-white"
-                    }`}
-                    disabled={page === "..."}
-                  >
-                    {page}
-                  </button>
-                ))}
-
-                {/* Next Button */}
-                <button
-                  onClick={goToNextPage}
-                  disabled={currentPage === currentTotalPages}
-                  className={`px-3 py-2 rounded-lg border ${
-                    currentPage === currentTotalPages
-                      ? "text-gray-400 border-gray-300 cursor-not-allowed"
-                      : "text-[#4B2E1E] border-[#4B2E1E] hover:bg-[#4B2E1E] hover:text-white"
-                  }`}
-                >
-                  &gt;
-                </button>
               </div>
-            )}
+            </div>
           </div>
-        </main>
-      </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(212, 163, 115, 0.1);
+          border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #c2794d, #d4a373);
+          border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #b36d42, #c2794d);
+        }
+      `}</style>
     </div>
   );
 }
