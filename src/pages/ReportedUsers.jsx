@@ -229,17 +229,14 @@ export default function UserManagement() {
 
       console.log("Hello: ", requestBody);
 
-      const response = await fetch(
-        `http://192.168.1.17:3000/api/v1/admin/warn`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(`${BASE_URL}/api/v1/admin/warn`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       const result = await response.json();
 
@@ -441,9 +438,10 @@ export default function UserManagement() {
                     <div className="flex items-center gap-4">
                       <button
                         className="rounded-lg px-6 py-2 text-base font-semibold transition bg-[#FF8418] text-white hover:bg-[#e09115] whitespace-nowrap"
-                        onClick={() => {
+                        onClick={async () => {
                           setReportModal(true);
                           setUser(user.id);
+                          await handleWarnUser();
                         }}
                       >
                         Warn user
@@ -502,20 +500,6 @@ export default function UserManagement() {
           </div>
         </main>
       </div>
-      <Modal
-        open={reportModal}
-        onCancel={() => setReportModal(false)}
-        onOk={() => {
-          setReportModal(false);
-          handleWarnUser();
-        }}
-        okText="Yes"
-        cancelText="No"
-      >
-        <h1 className="text-lg font-bold text-center mt-5">
-          Do you want to warn this user?
-        </h1>
-      </Modal>
     </div>
   );
 }
