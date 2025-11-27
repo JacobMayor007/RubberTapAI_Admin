@@ -7,12 +7,15 @@ import { DatePicker } from "antd";
 const { RangePicker } = DatePicker;
 
 import Loading from "../components/ui/Loading";
+import DiseaseInfoModal from "../components/ui/DiseaseInfo";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const userId = localStorage.getItem("userId");
 
-export default function AllAnalytics() {
+export default function Dashboard() {
   const btnRef = useRef(null);
+  const [selectedDisease, setSelectedDisease] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [analytics, setAnalytics] = useState([]);
   const [dropdown, setDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -179,7 +182,6 @@ export default function AllAnalytics() {
           <div className="fixed top-0 right-0 w-96 h-96 bg-[#D4A373]/10 rounded-full blur-3xl -z-10" />
           <div className="fixed bottom-0 left-0 w-96 h-96 bg-[#8FAA52]/10 rounded-full blur-3xl -z-10" />
 
-          {/* Header */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
             <div className="space-y-2">
               <h1 className="font-poppins font-bold text-4xl text-[#5D4E37] tracking-tight">
@@ -190,22 +192,31 @@ export default function AllAnalytics() {
                 Monitor rubber tree disease trends and insights
               </p>
             </div>
-            <div className="bg-white/60 backdrop-blur-md border border-[#D4A373]/30 rounded-2xl px-6 py-4 shadow-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar className="w-4 h-4 text-[#8B7355]" />
-                <h2 className="font-poppins font-semibold text-sm text-[#8B7355] uppercase tracking-wide">
-                  Period
-                </h2>
+            <div className="flex flex-row gap-5 items-center">
+              <div className="bg-white/60 backdrop-blur-md border border-[#D4A373]/30 rounded-2xl px-6 py-4 shadow-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="w-4 h-4 text-[#8B7355]" />
+                  <h2 className="font-poppins font-semibold text-sm text-[#8B7355] uppercase tracking-wide">
+                    Period
+                  </h2>
+                </div>
+                <p className="text-[#5D4E37] font-bold text-lg">
+                  {dateRange[0]?.format("MMM DD")} -{" "}
+                  {dateRange[1]?.format("MMM DD, YYYY")}
+                </p>
               </div>
-              <p className="text-[#5D4E37] font-bold text-lg">
-                {dateRange[0]?.format("MMM DD")} -{" "}
-                {dateRange[1]?.format("MMM DD, YYYY")}
-              </p>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => (window.location.href = "/analytics-table")}
+                  className="px-4 py-2 italic bg-[#C2794D] hover:bg-[#D4A373] cursor-pointer text-white font-semibold rounded-lg shadow-md transition-all duration-200"
+                >
+                  View Full Analytics
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 flex-1 gap-8">
-            {/* Left Column - Pie Chart */}
             <div className="bg-white/90 backdrop-blur-md drop-shadow-2xl p-8 rounded-[2rem] flex flex-col border-2 border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-all duration-300">
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -246,15 +257,17 @@ export default function AllAnalytics() {
                   anthracnose={anthracnose}
                   leafSpot={leafSpot}
                   oidium={oidium}
+                  onLegendClick={(diseaseName) => {
+                    setSelectedDisease(diseaseName);
+                    setModalOpen(true);
+                  }}
                 />
               </div>
             </div>
 
-            {/* Right Column - Stats and Bar Chart */}
             <div className="flex flex-col gap-6">
               {/* Stats Cards */}
               <div className="grid grid-cols-3 gap-5">
-                {/* Total Users Card */}
                 <div className="group bg-gradient-to-br from-white via-white to-[#C2794D]/5 backdrop-blur-md drop-shadow-xl rounded-[1.5rem] p-5 flex flex-col items-center justify-center border-2 border-white/60 hover:border-[#C2794D]/40 hover:scale-105 hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-2xl">
                   <div className="bg-gradient-to-br from-[#C2794D] to-[#D4A373] p-4 rounded-2xl mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
                     <Users className="text-white" size={28} strokeWidth={2.5} />
@@ -373,6 +386,13 @@ export default function AllAnalytics() {
               </div>
             </div>
           </div>
+          {modalOpen && (
+            <DiseaseInfoModal
+              open={modalOpen}
+              disease={selectedDisease}
+              onClose={() => setModalOpen(false)}
+            />
+          )}
         </div>
       )}
 
