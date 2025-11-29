@@ -396,7 +396,7 @@ export default function UserManagement() {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#8B7355] group-focus-within:text-[#C2794D] transition-colors" />
               <input
                 type="text"
-                placeholder="Search by ID or name..."
+                placeholder="Search by name..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full rounded-2xl border-2 border-[#D4A373]/30 bg-white/80 backdrop-blur-sm pl-12 pr-4 py-4 text-[#5D4E37] placeholder-[#8B7355]/60 focus:outline-none focus:border-[#C2794D] focus:shadow-lg transition-all duration-300"

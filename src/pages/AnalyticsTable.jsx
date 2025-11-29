@@ -403,17 +403,7 @@ export default function AnalyticsTable() {
                         {selectedItem.fullName || "Anonymous User"}
                       </p>
                     </div>
-                    <div>
-                      <label className="text-xs text-amber-500 font-medium">
-                        User ID
-                      </label>
-                      <p className="text-amber-900 font-mono text-sm">
-                        {selectedItem.userId ||
-                          selectedItem.userID ||
-                          selectedItem.id ||
-                          "No ID"}
-                      </p>
-                    </div>
+
                     {selectedItem.email && (
                       <div className="md:col-span-2">
                         <label className="text-xs text-amber-500 font-medium">
