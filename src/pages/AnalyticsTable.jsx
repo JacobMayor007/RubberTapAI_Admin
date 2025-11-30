@@ -88,7 +88,6 @@ export default function AnalyticsTable() {
   const filteredAnalytics = analytics
     .filter((item) => {
       if (!search.trim()) return true;
-
       return (
         (item.fullName?.toLowerCase() || "").includes(search.toLowerCase()) ||
         (item.userId?.toLowerCase() || "").includes(search.toLowerCase()) ||
@@ -300,11 +299,8 @@ export default function AnalyticsTable() {
                     >
                       <td className="px-6 py-4">
                         <div>
-                          <div className="font-medium text-amber-900">
-                            {item.fullName || "Anonymous User"}
-                          </div>
-                          <div className="text-sm text-amber-600/70 font-mono">
-                            {item.userId || item.userID || item.id || "No ID"}
+                          <div className="font-bold text-lg text-amber-600/90 font-mono">
+                            {item.fullName}
                           </div>
                         </div>
                       </td>
