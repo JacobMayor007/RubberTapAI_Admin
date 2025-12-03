@@ -88,7 +88,6 @@ export default function AnalyticsTable() {
   const filteredAnalytics = analytics
     .filter((item) => {
       if (!search.trim()) return true;
-
       return (
         (item.fullName?.toLowerCase() || "").includes(search.toLowerCase()) ||
         (item.userId?.toLowerCase() || "").includes(search.toLowerCase()) ||
@@ -202,7 +201,7 @@ export default function AnalyticsTable() {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-amber-500" />
               <input
                 type="text"
-                placeholder="Search by ID, name, email, location, or class..."
+                placeholder="Search by name, email, location, or class..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 bg-white/80 backdrop-blur-sm rounded-2xl border border-amber-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-300 transition-all duration-300 placeholder-amber-500/50"
@@ -300,11 +299,8 @@ export default function AnalyticsTable() {
                     >
                       <td className="px-6 py-4">
                         <div>
-                          <div className="font-medium text-amber-900">
-                            {item.fullName || "Anonymous User"}
-                          </div>
-                          <div className="text-sm text-amber-600/70 font-mono">
-                            {item.userId || item.userID || item.id || "No ID"}
+                          <div className="font-bold text-lg text-amber-600/90 font-mono">
+                            {item.fullName}
                           </div>
                         </div>
                       </td>

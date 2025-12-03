@@ -130,25 +130,26 @@ export default function Dashboard() {
     }
   }
 
-  const cityCases = {};
+  const subRegionCases = {};
+  console.log(filterAnalytics);
 
   for (let i = 0; i < filterAnalytics.length; i++) {
-    const city = filterAnalytics[i].city;
+    const subregion = filterAnalytics[i].subregion;
     if (filterAnalytics[i].className !== "Healthy") {
-      if (!city) continue;
+      if (!subregion) continue;
 
-      if (cityCases[city] === undefined) {
-        cityCases[city] = 1;
+      if (subRegionCases[subregion] === undefined) {
+        subRegionCases[subregion] = 1;
       } else {
-        cityCases[city]++;
+        subRegionCases[subregion]++;
       }
     }
   }
 
-  for (const city in cityCases) {
+  for (const subregion in subRegionCases) {
     leafCases.push({
-      city: city,
-      count: cityCases[city],
+      subRegion: subregion,
+      count: subRegionCases[subregion],
     });
   }
 
@@ -164,11 +165,6 @@ export default function Dashboard() {
       setDateRange(dates);
     }
   };
-
-  console.log(totalUser);
-
-  const maxCases =
-    leafCases.length > 0 ? Math.max(...leafCases.map((c) => c.count)) : 1;
 
   return (
     <div className="flex overflow-x-hidden h-screen bg-gradient-to-br from-[#F6E6D0] via-[#F5E5CC] to-[#F0DFC8]">
@@ -329,49 +325,59 @@ export default function Dashboard() {
 
                 <div className="flex flex-col gap-4 overflow-y-auto max-h-[420px] pr-3 custom-scrollbar">
                   {leafCases.length > 0 ? (
-                    leafCases.map((data, index) => {
-                      const widthPercent = (data.count / maxCases) * 100;
-                      const barColors = [
-                        "from-[#C2794D] via-[#D4A373] to-[#E6B894]",
-                        "from-[#8FAA52] via-[#A8C686] to-[#C5E1A5]",
-                        "from-[#CD853F] via-[#DEB887] to-[#F5DEB3]",
-                      ];
-                      const bgColor = barColors[index % barColors.length];
-
-                      return (
-                        <div
-                          key={index}
-                          className="group hover:bg-gradient-to-r hover:from-[#F5DEB3]/20 hover:to-transparent p-4 rounded-2xl transition-all duration-300 border-2 border-transparent hover:border-[#D4A373]/20"
-                          style={{
-                            animation: `slideIn 0.5s ease-out ${
-                              index * 0.1
-                            }s both`,
-                          }}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-bold text-[#5D4E37] truncate max-w-[140px] group-hover:text-[#C2794D] transition-colors">
-                              {data.city}
-                            </h3>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-black text-[#5D4E37]">
-                                {data.count}
-                              </span>
-                              <span className="text-[10px] font-semibold text-white bg-gradient-to-r from-[#C2794D] to-[#D4A373] px-3 py-1.5 rounded-full shadow-md">
-                                {data.count === 1 ? "CASE" : "CASES"}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="bg-gradient-to-r from-[#E6D5C3]/60 to-[#F5DEB3]/40 h-4 rounded-full overflow-hidden shadow-inner">
-                            <div
-                              className={`bg-gradient-to-r ${bgColor} h-full rounded-full transition-all duration-700 ease-out shadow-lg relative overflow-hidden`}
-                              style={{ width: `${widthPercent}%` }}
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                            </div>
-                          </div>
-                        </div>
+                    (() => {
+                      const totalLeafCases = leafCases.reduce(
+                        (sum, data) => sum + data.count,
+                        0
                       );
-                    })
+
+                      return leafCases.map((data, index) => {
+                        // Calculate percentage: (city cases / total cases) * 100
+                        const widthPercent =
+                          (data.count / totalLeafCases) * 100;
+
+                        const barColors = [
+                          "from-[#C2794D] via-[#D4A373] to-[#E6B894]",
+                          "from-[#8FAA52] via-[#A8C686] to-[#C5E1A5]",
+                          "from-[#CD853F] via-[#DEB887] to-[#F5DEB3]",
+                        ];
+                        const bgColor = barColors[index % barColors.length];
+
+                        return (
+                          <div
+                            key={index}
+                            className="group hover:bg-gradient-to-r hover:from-[#F5DEB3]/20 hover:to-transparent p-4 rounded-2xl transition-all duration-300 border-2 border-transparent hover:border-[#D4A373]/20"
+                            style={{
+                              animation: `slideIn 0.5s ease-out ${
+                                index * 0.1
+                              }s both`,
+                            }}
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <h3 className="text-sm font-bold text-[#5D4E37] truncate max-w-[140px] group-hover:text-[#C2794D] transition-colors">
+                                {data.subRegion}
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-black text-[#5D4E37]">
+                                  {data.count}
+                                </span>
+                                <span className="text-[10px] font-semibold text-white bg-gradient-to-r from-[#C2794D] to-[#D4A373] px-3 py-1.5 rounded-full shadow-md">
+                                  {data.count === 1 ? "CASE" : "CASES"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="bg-gradient-to-r from-[#E6D5C3]/60 to-[#F5DEB3]/40 h-4 rounded-full overflow-hidden shadow-inner">
+                              <div
+                                className={`bg-gradient-to-r ${bgColor} h-full rounded-full transition-all duration-700 ease-out shadow-lg relative overflow-hidden`}
+                                style={{ width: `${widthPercent}%` }}
+                              >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()
                   ) : (
                     <div className="flex flex-col items-center justify-center h-40 gap-4">
                       <div className="bg-[#F5DEB3]/20 p-4 rounded-2xl">
