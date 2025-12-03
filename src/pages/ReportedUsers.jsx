@@ -32,6 +32,8 @@ export default function UserManagement() {
   const [sortBy, setSortBy] = useState("Most reported");
   const [user, setUser] = useState("");
   const [selectedReport, setSelectedReport] = useState(null);
+  const [reportModal, setReportModal] = useState(false);
+
 
   console.log("BASE URL: ", BASE_URL);
 
@@ -86,8 +88,7 @@ export default function UserManagement() {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(
-            `HTTP error! Status: ${response.status}, Message: ${
-              errorData.message || "Unknown server error"
+            `HTTP error! Status: ${response.status}, Message: ${errorData.message || "Unknown server error"
             }`
           );
         }
@@ -374,7 +375,7 @@ export default function UserManagement() {
   console.log(selectedReport);
 
   return (
-    <div className="flex overflow-x-hidden h-screen bg-gradient-to-br from-[#F6E6D0] via-[#F5E5CC] to-[#F0DFC8]">
+    <div className="flex overflow-x-hidden h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
       <Sidebar />
 
       {/* Decorative Background Elements */}
@@ -474,11 +475,10 @@ export default function UserManagement() {
                 }}
               >
                 <div
-                  className={`flex items-center justify-between rounded-3xl bg-white/90 backdrop-blur-sm px-8 py-6 shadow-lg cursor-pointer transition-all duration-300 border-2 ${
-                    expandedUserId === user.id
+                  className={`flex items-center justify-between rounded-3xl bg-white/90 backdrop-blur-sm px-8 py-6 shadow-lg cursor-pointer transition-all duration-300 border-2 ${expandedUserId === user.id
                       ? "border-[#C2794D] shadow-2xl scale-[1.02]"
                       : "border-white/50 hover:border-[#D4A373]/50 hover:shadow-xl hover:scale-[1.01]"
-                  }`}
+                    }`}
                 >
                   <div
                     onClick={() => handleToggleExpand(user.id)}
@@ -524,11 +524,10 @@ export default function UserManagement() {
 
                           {/* Status Badge */}
                           <span
-                            className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                              user.status === "Enabled"
+                            className={`text-xs font-semibold px-2 py-1 rounded-full ${user.status === "Enabled"
                                 ? "bg-green-100 text-green-700"
                                 : "bg-red-100 text-red-700"
-                            }`}
+                              }`}
                           >
                             {user.status}
                           </span>
@@ -575,11 +574,10 @@ export default function UserManagement() {
                     </button>
 
                     <button
-                      className={`group/btn rounded-2xl px-7 py-3.5 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2 ${
-                        user.status === "Enabled"
+                      className={`group/btn rounded-2xl px-7 py-3.5 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2 ${user.status === "Enabled"
                           ? "bg-gradient-to-r from-[#FF2D2D] to-[#FF5252] text-white hover:from-[#c82323] hover:to-[#FF2D2D]"
                           : "bg-gradient-to-r from-[#7CB154] to-[#8FC768] text-white hover:from-[#5e8c3a] hover:to-[#7CB154]"
-                      }`}
+                        }`}
                       onClick={(e) => {
                         handleToggleStatus(user.id, user.status, e);
                       }}
@@ -643,13 +641,12 @@ export default function UserManagement() {
           {/* Notification Toast */}
           {notif && (
             <div
-              className={`fixed top-8 right-8 z-50 px-8 py-4 rounded-2xl shadow-2xl font-bold transition-all duration-300 flex items-center gap-3 backdrop-blur-md border-2 ${
-                notif.type === "success"
+              className={`fixed top-8 right-8 z-50 px-8 py-4 rounded-2xl shadow-2xl font-bold transition-all duration-300 flex items-center gap-3 backdrop-blur-md border-2 ${notif.type === "success"
                   ? "bg-gradient-to-r from-[#7CB154] to-[#8FC768] text-white border-[#7CB154]"
                   : notif.type === "error"
-                  ? "bg-gradient-to-r from-red-500 to-red-600 text-white border-red-500"
-                  : "bg-gradient-to-r from-[#F9A825] to-[#FFC107] text-white border-[#F9A825]"
-              }`}
+                    ? "bg-gradient-to-r from-red-500 to-red-600 text-white border-red-500"
+                    : "bg-gradient-to-r from-[#F9A825] to-[#FFC107] text-white border-[#F9A825]"
+                }`}
               style={{ animation: "slideInRight 0.3s ease-out" }}
             >
               {notif.type === "success" && <CheckCircle className="w-6 h-6" />}
@@ -720,13 +717,12 @@ export default function UserManagement() {
               {/* Status Badge */}
               <div className="flex items-center gap-3">
                 <span
-                  className={`px-4 py-2 rounded-full text-sm font-bold capitalize ${
-                    selectedReport.status === "Resolved"
+                  className={`px-4 py-2 rounded-full text-sm font-bold capitalize ${selectedReport.status === "Resolved"
                       ? "bg-green-100 text-green-700"
                       : selectedReport.status === "Pending"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
                 >
                   {String(selectedReport.status).concat("d") || "Pending"}{" "}
                 </span>

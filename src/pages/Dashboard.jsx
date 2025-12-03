@@ -167,7 +167,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex overflow-x-hidden h-screen bg-gradient-to-br from-[#F6E6D0] via-[#F5E5CC] to-[#F0DFC8]">
+    <div className="flex overflow-x-hidden h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
       <Sidebar />
       {loading ? (
         <div className="flex-1 flex flex-col py-6 px-12 ml-0 md:ml-60 pt-32 items-center justify-center">
@@ -348,9 +348,8 @@ export default function Dashboard() {
                             key={index}
                             className="group hover:bg-gradient-to-r hover:from-[#F5DEB3]/20 hover:to-transparent p-4 rounded-2xl transition-all duration-300 border-2 border-transparent hover:border-[#D4A373]/20"
                             style={{
-                              animation: `slideIn 0.5s ease-out ${
-                                index * 0.1
-                              }s both`,
+                              animation: `slideIn 0.5s ease-out ${index * 0.1
+                                }s both`,
                             }}
                           >
                             <div className="flex items-center justify-between mb-3">

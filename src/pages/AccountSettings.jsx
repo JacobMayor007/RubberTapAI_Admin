@@ -9,6 +9,9 @@ export default function AccountSettings() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [user, setUser] = useState(null);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
 
   useEffect(() => {
     const fetchAdminData = async () => {
@@ -29,7 +32,7 @@ export default function AccountSettings() {
       <Sidebar />
 
       {/* MAIN CONTENT */}
-      <div className="ml-60 min-h-screen flex-1 bg-[#F6E6D0] p-6">
+      <div className="ml-60 min-h-screen flex-1 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-6">
         <Navbar />
 
         <main className="p-10 mt-6 mx-7">
@@ -86,10 +89,11 @@ export default function AccountSettings() {
                     </label>
                     <input
                       type="text"
-                      value="admin"
+                      value={user?.username || ""}
                       readOnly
                       className="flex-1 rounded-lg border border-gray-300 px-3 py-2 bg-white shadow-sm"
                     />
+
                   </div>
 
                   <div className="mb-5 flex items-center">
@@ -99,9 +103,13 @@ export default function AccountSettings() {
                     <div className="relative flex-1">
                       <input
                         type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter new password"
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-12 shadow-sm"
-                        defaultValue="***********************"
                       />
+
+
                       <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
@@ -123,9 +131,11 @@ export default function AccountSettings() {
                     </label>
                     <div className="relative flex-1">
                       <input
-                        type={showConfirm ? "text" : "password"}
+                        type={showPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Enter new password"
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-12 shadow-sm"
-                        defaultValue="***********************"
                       />
                       <button
                         type="button"
