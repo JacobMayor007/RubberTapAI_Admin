@@ -130,25 +130,26 @@ export default function Dashboard() {
     }
   }
 
-  const cityCases = {};
+  const subRegionCases = {};
+  console.log(filterAnalytics);
 
   for (let i = 0; i < filterAnalytics.length; i++) {
-    const city = filterAnalytics[i].city;
+    const subregion = filterAnalytics[i].subregion;
     if (filterAnalytics[i].className !== "Healthy") {
-      if (!city) continue;
+      if (!subregion) continue;
 
-      if (cityCases[city] === undefined) {
-        cityCases[city] = 1;
+      if (subRegionCases[subregion] === undefined) {
+        subRegionCases[subregion] = 1;
       } else {
-        cityCases[city]++;
+        subRegionCases[subregion]++;
       }
     }
   }
 
-  for (const city in cityCases) {
+  for (const subregion in subRegionCases) {
     leafCases.push({
-      city: city,
-      count: cityCases[city],
+      subRegion: subregion,
+      count: subRegionCases[subregion],
     });
   }
 
@@ -354,7 +355,7 @@ export default function Dashboard() {
                           >
                             <div className="flex items-center justify-between mb-3">
                               <h3 className="text-sm font-bold text-[#5D4E37] truncate max-w-[140px] group-hover:text-[#C2794D] transition-colors">
-                                {data.city}
+                                {data.subRegion}
                               </h3>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-black text-[#5D4E37]">

@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Shield,
 } from "lucide-react";
+import dayjs from "dayjs";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const userId = localStorage.getItem("userId");
@@ -29,8 +30,8 @@ export default function UserManagement() {
   const [notif, setNotif] = useState(null);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState("Most reported");
-  const [reportModal, setReportModal] = useState(false);
   const [user, setUser] = useState("");
+  const [selectedReport, setSelectedReport] = useState(null);
 
   console.log("BASE URL: ", BASE_URL);
 
@@ -93,6 +94,8 @@ export default function UserManagement() {
 
         const data = await response.json();
 
+        console.log(data);
+
         const groupedUsers = data.reduce((acc, report) => {
           const id = report.reported_id;
 
@@ -118,9 +121,15 @@ export default function UserManagement() {
           acc[id].reports.push({
             id: report.$id,
             reporterId: report.reportedBy,
+            reporter_profile: report.reportedBy_Image,
             name: report.reportedBy_Name || "Unknown Reporter",
             date: reportDate.toLocaleDateString(),
             reason: report.description,
+            proof: report.proof,
+            type: report.type,
+            reported: report.reported_id_name,
+            reported_profile: report.reported_id_image,
+            status: report.status,
           });
           return acc;
         }, {});
@@ -340,6 +349,7 @@ export default function UserManagement() {
           {reports.map((report, index) => (
             <tr
               key={report.id}
+              onClick={() => setSelectedReport(report)}
               className="border-b border-[#D4A373]/10 hover:bg-[#F5DEB3]/20 transition-colors"
             >
               <td className="py-4 px-4 text-sm text-[#5D4E37] font-mono">
@@ -360,6 +370,8 @@ export default function UserManagement() {
       </table>
     </div>
   );
+
+  console.log(selectedReport);
 
   return (
     <div className="flex overflow-x-hidden h-screen bg-gradient-to-br from-[#F6E6D0] via-[#F5E5CC] to-[#F0DFC8]">
@@ -647,6 +659,213 @@ export default function UserManagement() {
           )}
         </main>
       </div>
+
+      {selectedReport && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div
+            className="bg-white rounded-3xl border border-amber-200 shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-6 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gradient-to-br from-amber-600 to-orange-600 p-2.5 rounded-xl shadow-md">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4v2m0 4v2M7 9H5a2 2 0 00-2 2v12a2 2 0 002 2h14a2 2 0 002-2V11a2 2 0 00-2-2h-2m-4-3V7a2 2 0 00-2-2H9a2 2 0 00-2 2v1m0 0H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-1m-6-1V7a1 1 0 012 0v1m0 0h6v-1a1 1 0 012 0v1"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-amber-900">
+                      Report Details
+                    </h3>
+                    <p className="text-sm text-amber-600">
+                      Submitted{" "}
+                      {new Date(selectedReport.$createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedReport(null)}
+                  className="p-2 hover:bg-amber-100 rounded-xl transition-colors"
+                >
+                  <svg
+                    className="w-5 h-5 text-amber-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Status Badge */}
+              <div className="flex items-center gap-3">
+                <span
+                  className={`px-4 py-2 rounded-full text-sm font-bold capitalize ${
+                    selectedReport.status === "Resolved"
+                      ? "bg-green-100 text-green-700"
+                      : selectedReport.status === "Pending"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {String(selectedReport.status).concat("d") || "Pending"}{" "}
+                </span>
+                {selectedReport.type && (
+                  <span className="px-4 py-2 rounded-full text-sm font-bold bg-amber-100 text-amber-700">
+                    {selectedReport.type}
+                  </span>
+                )}
+              </div>
+
+              {/* Reported User Section */}
+              <div>
+                <h4 className="text-sm font-semibold text-amber-600 mb-3 uppercase tracking-wider">
+                  Reported User
+                </h4>
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-4 border border-red-200">
+                  <div className="flex items-center gap-4">
+                    {selectedReport.reported_profile && (
+                      <img
+                        src={selectedReport.reported_profile}
+                        alt={selectedReport.reported_profile}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-red-300"
+                      />
+                    )}
+                    <div>
+                      <label className="text-xs text-red-500 font-medium">
+                        Name
+                      </label>
+                      <p className="text-lg font-bold text-red-900">
+                        {selectedReport.reported_id_name ||
+                          selectedReport.reported}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Report Submitter Section */}
+              <div>
+                <h4 className="text-sm font-semibold text-amber-600 mb-3 uppercase tracking-wider">
+                  Reported By
+                </h4>
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-4 border border-blue-200">
+                  <div className="flex items-center gap-4">
+                    {selectedReport.reporter_profile && (
+                      <img
+                        src={selectedReport.reporter_profile}
+                        alt={selectedReport.reporter_profile}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-blue-300"
+                      />
+                    )}
+                    <div>
+                      <label className="text-xs text-blue-500 font-medium">
+                        Name
+                      </label>
+                      <p className="text-lg font-bold text-blue-900">
+                        {selectedReport.name || "Anonymous"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Report Description */}
+              <div>
+                <h4 className="text-sm font-semibold text-amber-600 mb-3 uppercase tracking-wider">
+                  Description
+                </h4>
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 border border-amber-200">
+                  <p className="text-amber-900 leading-relaxed">
+                    {selectedReport.reason || "No description provided"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Proof Image */}
+              {selectedReport.proof && (
+                <div>
+                  <h4 className="text-sm font-semibold text-amber-600 mb-3 uppercase tracking-wider">
+                    Proof Image
+                  </h4>
+                  <div className="rounded-2xl overflow-hidden border-2 border-amber-200 shadow-lg">
+                    <img
+                      src={selectedReport.proof}
+                      alt="Report proof"
+                      className="w-full h-auto max-h-96 object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Report Details Grid */}
+              <div>
+                <h4 className="text-sm font-semibold text-amber-600 mb-3 uppercase tracking-wider">
+                  Additional Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-4 border border-gray-200">
+                    <label className="text-xs text-gray-500 font-medium">
+                      Report Type
+                    </label>
+                    <p className="text-gray-900 font-medium">
+                      {selectedReport.type || "Not specified"}
+                    </p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-4 border border-gray-200">
+                    <label className="text-xs text-gray-500 font-medium">
+                      Status
+                    </label>
+                    <p className="text-gray-900 font-medium capitalize">
+                      {String(selectedReport.status).concat("d") || "Pending"}
+                    </p>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-4 border border-gray-200">
+                    <label className="text-xs text-gray-500 font-medium">
+                      Submitted Date
+                    </label>
+                    <p className="text-gray-900 font-medium">
+                      {dayjs(selectedReport.date).format("MMMM DD, YYYY")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 flex gap-3">
+              <button
+                onClick={() => setSelectedReport(null)}
+                className="flex-1 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
+              >
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes slideIn {
